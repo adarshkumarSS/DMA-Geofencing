@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% load static %}
+
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div style="border: 2px solid #ccc; padding: 10px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        <div id="map" style="width: 600px; height: 600px; position: relative; transition: transform 0.3s ease;" 
+             onmouseover="this.style.transform='scale(1.02)'; this.style.cursor='pointer'; this.style.opacity='0.8';" 
+             onmouseout="this.style.transform='scale(1)'; this.style.opacity='1';">
+        </div>
+    </div>
+</div>
+
+
+<div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div id="map" style="width: 600px; height: 600px; position: relative; transition: transform 0.3s ease;" 
+         onmouseover="this.style.transform='scale(1.02)'; this.style.cursor='pointer'; this.style.opacity='0.8';" 
+         onmouseout="this.style.transform='scale(1)'; this.style.opacity='1';">
+    </div>
+</div>
+
+
+
+<!-- Legend -->
+<div id="legend" style="position: fixed; width: 200px; height: 100px; bottom: 10px; left: 10px; background-color: rgba(255, 255, 255, 0.8); padding: 15px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; cursor: move;">
+    <h4 style="text-align: center; margin-bottom: 10px; color: #333;">Legend</h4>
+    <p style="margin: 5px 0;">
+        <span style="background-color: red; width: 15px; height: 15px; display: inline-block; border-radius: 50%; margin-right: 5px;"></span>
+        Your Location
+    </p>
+    <p style="margin: 5px 0;">
+        <span style="background-color: blue; width: 15px; height: 15px; display: inline-block; border-radius: 50%; margin-right: 5px;"></span>
+        Nearest Hotspot
+    </p>
+</div>
+
+{{ stations|json_script:"stations_json" }}
+
+<script>
+
+    const mapElement = document.getElementById('map');
+
+    mapElement.addEventListener('mouseenter', () => {
+        mapElement.style.opacity = '0.8'; // Reduce opacity on hover
+    });
+
+    mapElement.addEventListener('mouseleave', () => {
+        mapElement.style.opacity = '1'; // Reset opacity when not hovered
+    });
+
+    // Drag and drop functionality for the legend
+    const legend = document.getElementById('legend');
+
+    // Set the initial position of the legend
+    legend.style.left = '10px';
+    legend.style.top = 'calc(100% - 150px)'; // Adjust this based on the height of the legend
+
+    legend.onmousedown = function(event) {
+        event.preventDefault(); // Prevent default behavior to avoid selection issues
+        let shiftX = event.clientX - legend.getBoundingClientRect().left;
+        let shiftY = event.clientY - legend.getBoundingClientRect().top;
+
+        function moveAt(pageX, pageY) {
+            // Update left and top without changing width or height
+            legend.style.left = pageX - shiftX + 'px';
+            legend.style.top = pageY - shiftY + 'px';
+        }
+
+        function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+        }
+
+        document.addEventListener('mousemove', onMouseMove);
+
+        legend.onmouseup = function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            legend.onmouseup = null;
+        };
+    };
+
+    legend.ondragstart = function() {
+        return false; // Prevent default drag behavior
+    };
+
+    // Map initialization and user location handling
+    var map = L.map('map').setView([11.150554685663923, 79.45866232020596], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    let stations = JSON.parse(document.getElementById('stations_json').textContent);
+
+    // Adding blue markers for hotspots
+    stations.forEach(station => {
+        L.marker([station.latitude, station.longitude], {
+            icon: L.icon({
+                iconUrl: '{% static "img/blue.png" %}', // Blue marker icon URL
+                iconSize: [35, 40],
+                iconAnchor: [15, 50],
+                popupAnchor: [1, -34],
+            })
+        }).addTo(map).bindPopup(`<b>Hotspot</b><br>${station.name}`);
+    });
+
+    // Function to handle user location
+    function getUserLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(success, error);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+
+    // Success callback
+    function success(position) {
+        let lat = position.coords.latitude;
+        let lng = position.coords.longitude;
+
+        // Center the map on the user's location
+        map.setView([lat, lng], 13); // Adjust the zoom level as needed
+
+        // Add a red marker for the user's location
+        L.marker([lat, lng], {
+            icon: L.icon({
+                iconUrl: '{% static "img/red.png" %}', // Red marker icon URL
+                iconSize: [35, 40],
+                iconAnchor: [15, 50],
+                popupAnchor: [1, -34],
+            })
+        }).addTo(map).bindPopup(`<b>Your Location</b>`).openPopup();
+
+        // Fetch nearest station
+        fetch(`/get-nearest-station?latitude=${lat}&longitude=${lng}`).then(response => response.json()).then(result => {
+            let station_coordinates = result.coordinates;
+            let user_coordinates = [lat, lng];
+            let polyline = L.polyline([user_coordinates, station_coordinates], {
+                color: 'blue', // Base color
+                weight: 5, // Line thickness
+                opacity: 0.8, // Opacity
+            }).addTo(map);
+
+            // Display distance
+            let distanceText;
+            if (result.distance >= 1) {
+                distanceText = `${result.distance.toFixed(2)} km`;
+            } else {
+                distanceText = `${(result.distance * 1000).toFixed(0)} meters`;
+            }
+
+            var popup = L.popup()
+                .setLatLng([lat, lng])
+                .setContent(`<p>Nearest station is ${distanceText} away.</p>`)
+                .openOn(map);
+        });
+    }
+
+    // Error callback
+    function error() {
+        alert("Unable to retrieve your location. Using default location.");
+        let fallbackLat = 11.150554685663923; // Coimbatore lat
+        let fallbackLng = 79.45866232020596; // Coimbatore lng
+        map.setView([fallbackLat, fallbackLng], 13);
+        
+        // Optionally, add a marker for the fallback location
+        L.marker([fallbackLat, fallbackLng], {
+            icon: L.icon({
+                iconUrl: '{% static "img/red.png" %}', // Red marker icon URL
+                iconSize: [35, 40],
+                iconAnchor: [15, 50],
+                popupAnchor: [1, -34],
+            })
+        }).addTo(map).bindPopup(`<b>Default Location</b>`).openPopup();
+    }
+
+    // Call getUserLocation on page load
+    window.onload = getUserLocation;
+
+</script>
+
+{% endblock %}

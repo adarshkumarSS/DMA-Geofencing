@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f9f9f9;
+        }
+        #map {
+            width: 600px;
+            height: 600px;
+            transition: transform 0.3s ease;
+        }
+        #removeMarkersBtn, #saveMarkersBtn {
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            margin-top: 10px;
+        }
+        #saveMarkersBtn {
+            background-color: green;
+            color: white;
+        }
+        .map-container {
+            border: 2px solid #ccc;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .legend {
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: move; /* Indicate draggable */
+        }
+        
+
+    </style>
+</head>
+<body>
+    <div class="map-container">
+        <div id="map" 
+             onmouseover="this.style.transform='scale(1.02)'; this.style.cursor='pointer'; this.style.opacity='0.8';" 
+             onmouseout="this.style.transform='scale(1)'; this.style.opacity='1';">
+        </div>
+        <button id="removeMarkersBtn">Remove All Markers</button>
+        <button id="saveMarkersBtn">Save Markers</button>
+    </div>
+
+    <div id="legend" class="legend" style="position: absolute; top: 20px; left: 20px;">
+        <h4>Legend</h4>
+        <div><span style="background-color: red;">&nbsp;&nbsp;&nbsp;&nbsp;</span> Your Location</div>
+        <div><span style="background-color: blue;">&nbsp;&nbsp;&nbsp;&nbsp;</span> Hotspot Location</div>
+    </div>    
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        var map = L.map('map').setView([11.1271, 78.6569], 7); // Centered on Tamil Nadu
+        var markers = [];
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        // Function to load existing markers from the database
+        function loadMarkers() {
+            $.ajax({
+                url: "{% url 'load_markers' %}", // Django URL to fetch markers
+                type: "GET",
+                success: function(response) {
+                    response.markers.forEach(function(markerData) {
+                        var marker = L.marker([markerData.latitude, markerData.longitude]).addTo(map);
+                        markers.push(marker);  // Store the marker in the array
+                    });
+                },
+                error: function(xhr, status, error) {
+                    console.error("Failed to load markers:", error);
+                }
+            });
+        }
+
+        // Load markers when the page is loaded
+        $(document).ready(function() {
+            loadMarkers();
+        });
+
+        // Add marker on map click
+        map.on('click', function(event) {
+            var latitude = event.latlng.lat;
+            var longitude = event.latlng.lng;
+
+            // Place a marker on the map where the user clicked
+            var marker = L.marker([latitude, longitude]).addTo(map);
+            markers.push(marker);  // Store the marker for later removal
+
+            // Optional: Prompt the user for a station name
+            var stationName = prompt("Enter the station name:");
+
+            // Save the marker's location to the database
+            $.ajax({
+                url: "{% url 'save_marker' %}",
+                type: "POST",
+                data: {
+                    'latitude': latitude,
+                    'longitude': longitude,
+                    'station_name': stationName,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Marker saved successfully!');
+                    } else {
+                        alert('Markers saved temporarily !');
+                    }
+                }
+            });
+        });
+
+        // Remove all markers
+        document.getElementById('removeMarkersBtn').addEventListener('click', function() {
+            $.ajax({
+                url: "{% url 'remove_all_markers' %}",
+                type: "POST",
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        markers.forEach(function(marker) {
+                            map.removeLayer(marker);
+                        });
+                        markers = [];  // Clear the markers array
+                        alert('All markers removed successfully!');
+                    } else {
+                        alert('Failed to remove markers.');
+                    }
+                }
+            });
+        });
+
+        // Save all markers to the database
+        document.getElementById('saveMarkersBtn').addEventListener('click', function() {
+            var markerData = markers.map(function(marker) {
+                return {
+                    latitude: marker.getLatLng().lat,
+                    longitude: marker.getLatLng().lng
+                };
+            });
+
+            $.ajax({
+                url: "{% url 'save_marker' %}",
+                type: "POST",
+                data: {
+                    'markers': JSON.stringify(markerData),
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        alert('Markers saved successfully!');
+                    } else {
+                        alert('Failed to save markers.');
+                    }
+                }
+            });
+        });
+
+        // Make the legend draggable
+        var legend = document.getElementById('legend');
+        legend.addEventListener('mousedown', function(e) {
+            var shiftX = e.clientX - legend.getBoundingClientRect().left;
+            var shiftY = e.clientY - legend.getBoundingClientRect().top;
+
+            function moveAt(pageX, pageY) {
+                legend.style.left = pageX - shiftX + 'px';
+                legend.style.top = pageY - shiftY + 'px';
+            }
+
+            function onMouseMove(e) {
+                moveAt(e.pageX, e.pageY);
+            }
+
+            // Move the legend on mousemove
+            document.addEventListener('mousemove', onMouseMove);
+
+            // Drop the legend, remove unneeded handlers
+            legend.onmouseup = function() {
+                document.removeEventListener('mousemove', onMouseMove);
+                legend.onmouseup = null;
+            };
+        });
+
+        // Prevent default drag behavior
+        legend.ondragstart = function() {
+            return false;
+        };
+
+
+    </script>
+</body>
+</html>
