@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-from core.models import EVChargingLocation
+from core.models import EVChargingLocation,District
 from geopy.distance import geodesic
 import json
 
@@ -31,8 +31,11 @@ def nearest_station(request):
 
 
 def map_view(request):
-    return render(request, 'map.html')
-
+    districts = list(District.objects.all().values('dtname', 'stname', 'coordinates'))
+    context = {
+        'districts': json.dumps(districts)
+    }
+    return render(request, 'map.html', context)
 
 def save_marker(request):
     if request.method == 'POST':

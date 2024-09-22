@@ -48,7 +48,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             cursor: move; /* Indicate draggable */
         }
-    
     </style>
 </head>
 <body>
@@ -71,13 +70,58 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        var map = L.map('map').setView([11.1271, 78.6569], 7); // Centered on Tamil Nadu
-        var markers = [];
+        // Initialize the map centered on Tamil Nadu
+        var map = L.map('map').setView([11.1271, 78.6569], 7);
 
+        // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            maxZoom: 18,
+            attribution: '© OpenStreetMap'
         }).addTo(map);
+
+        // Get districts data from the Django context
+        var districts = JSON.parse('{{ districts|escapejs }}');
+
+        // Ensure the coordinates are in the correct format and add polygons to the map
+        // Ensure the coordinates are in the correct format and add polygons to the map
+        districts.forEach(function(district) {
+            if (district.coordinates.type === "Polygon") {
+                var coords = district.coordinates.coordinates[0].map(function(coordPair) {
+                    return [coordPair[1], coordPair[0]];
+                });
+                L.polygon(coords, {
+                    color: 'darkgreen',
+                    opacity: 0.5,
+                    fillColor: 'lightgreen',
+                    fillOpacity: 0.1,
+                    interactive: false // Make polygons non-interactive
+                }).addTo(map).bindPopup(district.dtname).on('mouseover', function() {
+                    this.openPopup();
+                }).on('mouseout', function() {
+                    this.closePopup();
+                });
+            } else if (district.coordinates.type === "MultiPolygon") {
+                district.coordinates.coordinates.forEach(function(polygon) {
+                    var coords = polygon[0].map(function(coordPair) {
+                        return [coordPair[1], coordPair[0]];
+                    });
+                    L.polygon(coords, {
+                        color: 'darkgreen',
+                        opacity: 0.5,
+                        fillColor: 'lightgreen',
+                        fillOpacity: 0.1,
+                        interactive: false // Make polygons non-interactive
+                    }).addTo(map).bindPopup(district.dtname).on('mouseover', function() {
+                        this.openPopup();
+                    }).on('mouseout', function() {
+                        this.closePopup();
+                    });
+                });
+            }
+        });
+
+        // Array to store markers
+        var markers = [];
 
         // Function to load existing markers from the database
         function loadMarkers() {
@@ -127,7 +171,7 @@
                     if (response.status === 'success') {
                         alert('Marker saved successfully!');
                     } else {
-                        alert('Markers saved temporarily !');
+                        alert('Markers saved temporarily!');
                     }
                 }
             });
@@ -210,8 +254,6 @@
         legend.ondragstart = function() {
             return false;
         };
-
-
     </script>
 </body>
 </html>
