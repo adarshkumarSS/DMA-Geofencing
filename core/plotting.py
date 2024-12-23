@@ -136,7 +136,7 @@ def flood_risk_analysis(file_path):
         alpha=0.5
     )
     plt.colorbar(scatter, label='Flood Risk')
-    plt.title('Flood Risk Distribution in Philippines')
+    plt.title('Flood Risk Distribution')
     plt.xlabel('Longitude')
     plt.ylabel('Latitude')
     plt.tight_layout()
