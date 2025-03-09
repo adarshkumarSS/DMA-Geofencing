@@ -6,13 +6,13 @@ Personal description: this was my SIH 2024 idea to pitch. Worked further on this
 Disaster Phase – Focused on real-time support for rescuers and victims.
 Post-Disaster Phase – Facilitates external users in recovery, aid distribution, and analysis.
 Key Features:
-🔹 Mesh Network Communication: Enables peer-to-peer communication in network-failure scenarios.
-🔹 People-to-People Connectivity: Prioritizes direct communication for emergency coordination.
-🔹 Geofencing Alerts: Sends real-time location-based alerts to affected areas.
-🔹 IVR (Interactive Voice Response) Technology: Provides automated voice-based assistance for non-smartphone users.
-🔹 Real-Time Data Sharing: Ensures critical updates and situational awareness.
-🔹 Privacy Protection: Secure and encrypted communication to safeguard user data.
-🔹 Funding Transparency Dashboard: Tracks and displays the allocation and utilization of disaster relief funds.
+- Mesh Network Communication: Enables peer-to-peer communication in network-failure scenarios.
+- People-to-People Connectivity: Prioritizes direct communication for emergency coordination.
+- Geofencing Alerts: Sends real-time location-based alerts to affected areas.
+- IVR (Interactive Voice Response) Technology: Provides automated voice-based assistance for non-smartphone users.
+- Real-Time Data Sharing: Ensures critical updates and situational awareness.
+- Privacy Protection: Secure and encrypted communication to safeguard user data.
+- Funding Transparency Dashboard: Tracks and displays the allocation and utilization of disaster relief funds.
 
 The DMA aims to streamline disaster response efforts, minimize communication breakdowns, and improve disaster resilience through technology and data-driven decision-making. If selected for the FAER Scholar Program, the project will undergo development over a 4-5 month timeline.
 
