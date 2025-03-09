@@ -18,9 +18,9 @@ The DMA aims to streamline disaster response efforts, minimize communication bre
 
 Outputs : 
 ![Screenshot 2024-11-28 201723](https://github.com/user-attachments/assets/f64af577-8082-45ff-8ba4-2d1c14d08bdf)
-![Screenshot 2024-11-28 201723](https://github.com/user-attachments/assets/67fc46b6-8783-4585-922f-ae76a4cd6031)
-![Screenshot 2024-11-28 201723](https://github.com/user-attachments/assets/c43c2f17-b468-4ddd-b2cf-6e03dff4cadb)
-![Screenshot 2024-11-28 201723](https://github.com/user-attachments/assets/f732905d-a353-435e-b318-b62eb2241b5d)
+![Screenshot 2024-11-07 212857](https://github.com/user-attachments/assets/8bd77fa8-1b51-46e2-bf50-7a6b46309216)
+![Screenshot 2024-11-07 212924](https://github.com/user-attachments/assets/ecb78bc2-4241-4eab-b56d-738b9d273958)
+![Screenshot 2024-11-07 212102](https://github.com/user-attachments/assets/4898247a-1a1d-43fd-874b-ecf3e5f06d4b)
 ![Screenshot 2024-11-07 213120](https://github.com/user-attachments/assets/098fc6c0-88f9-4911-a605-741b3a068645)
 
 System Architecture:
