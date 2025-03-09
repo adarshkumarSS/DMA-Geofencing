@@ -1,4 +1,4 @@
-#Disaster Management Application (DMA)
+# Disaster Management Application (DMA)
 The Disaster Management Application is a technology-driven solution designed to enhance communication, coordination, and resource management during disasters. The platform is structured into two key operational phases:
 
 Personal description: this was my SIH 2024 idea to pitch. Worked further on this for my Software Engineering Course project.
